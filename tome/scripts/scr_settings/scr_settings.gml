@@ -9,7 +9,7 @@ function setting_set_real(_section, _key, _value) {
 
 function setting_set_string(_section, _key, _value) {
 	ini_open("settings.ini");
-	ini_write_real(_section,_key,_value);
+	ini_write_string(_section,_key,_value);
 	ini_close();
 }
 

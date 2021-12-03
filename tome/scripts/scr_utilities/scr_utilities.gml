@@ -74,11 +74,13 @@ function image_single(_image=0){
 	image_speed=0;
 }
 
+///@desc Changes sprite without changing image_index (like for changing facing during walk anims)
 function sprite_shift(_sprite,_image_speed=image_speed){
 	sprite_index=_sprite;
 	image_speed=_image_speed;
 }
 
+///@desc Changes sprite and resets image index
 function sprite_change(_sprite,_image_speed = image_speed){
 	if (sprite_index!=_sprite){sprite_index=_sprite; image_index=0;}
 	image_speed=_image_speed;
