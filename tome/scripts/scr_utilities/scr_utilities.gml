@@ -44,13 +44,27 @@
 #macro NEWLINE chr(10)
 
 #endregion
-
+#region Display Helpers
+// Display macros
+#macro display_width display_get_width()
+#macro display_height display_get_height()
+#macro window_width window_get_width()
+#macro window_height window_get_height()
+#macro gui_width display_get_gui_width()
+#macro gui_height display_get_gui_height()
+#endregion
 #region Logging Macros
 #macro log show_debug_message
 #macro debuglog show_debug_message
 #macro show show_message
 
 #endregion 
+
+#region SHARED DATA STRUCTURES
+ds_list_create();
+#macro LIST 0
+
+#endregion
 
 #region TIME CONSTANTS
 #macro SECONDS_TO_MILLISECONDS 1000
@@ -65,7 +79,7 @@ function image_freeze(){
 
 ///@desc stops the sprite animation next time the loop finishes.
 function image_finish(){
-	if (image_index==image_number-1){image_speed=0; image_index=image_number-1;  return true;}
+	if (image_index>=image_number-image_speed){image_speed=0; image_index=image_number-1;  return true;}
 	return false;
 }
 
@@ -82,8 +96,9 @@ function sprite_shift(_sprite,_image_speed=image_speed){
 
 ///@desc Changes sprite and resets image index
 function sprite_change(_sprite,_image_speed = image_speed){
-	if (sprite_index!=_sprite){sprite_index=_sprite; image_index=0;}
 	image_speed=_image_speed;
+	if (sprite_index!=_sprite){sprite_index=_sprite; image_index=0; return true;}
+	return false;
 }
 
 function fourway(__fac,__spr1,__spr2,__spr3){
@@ -165,7 +180,7 @@ function bbox_height(){
 #region camera
 ///@param camera
 function getViewCenterX(){
-	var cam = view_get_camera(argument0);
+	var cam = view_get_camera(_arg0);
 	var left = camera_get_view_x(cam);
 	var w = camera_get_view_width(cam);
 	return left + w/2;
@@ -173,7 +188,7 @@ function getViewCenterX(){
 
 ///@param camera
 function getViewCenterY(){
-	var cam = view_get_camera(argument0);
+	var cam = view_get_camera(_arg0);
 	var top = camera_get_view_y(cam);
 	var h = camera_get_view_height(cam);
 	return top + h/2;
@@ -214,8 +229,8 @@ function view_left(_view){
 ///@param StringToBeSplit
 ///@param delimiter
 function splitString(){
-	var str = argument0; //string to split
-	var delimiter = argument1; //string to split the first string by
+	var str = _arg0; //string to split
+	var delimiter = _arg1; //string to split the first string by
 	var slot = 0;
 	var strings=undefined; //array to hold all strings we have split
 	var workingStr = ""; //uses a working array to hold the delimited data we're currently looking at
@@ -314,6 +329,32 @@ return _text_wrapped;
 #region Math
 
 
+function approach(_a,_b,_amount){
+	/// Approach(a, b, amount)
+	// Moves "a" towards "b" by "amount" and returns the result
+	// Nice bcause it will not overshoot "b", and works in both directions
+	// Examples:
+	//      speed = Approach(speed, max_speed, acceleration);
+	//      hp = Approach(hp, 0, damage_amount);
+	//      hp = Approach(hp, max_hp, heal_amount);
+	//      x = Approach(x, target_x, move_speed);
+	//      y = Approach(y, target_y, move_speed);
+ 
+	if (_a< _b)
+	{
+	    _a+= _amount;
+	    if (_a> _b)
+	        return _b;
+	}
+	else
+	{
+	    _a-= _amount;
+	    if (_a< _b)
+	        return _b;
+	}
+	return _a;	
+}
+
 ///@param 
 /**
 This is a bit funny to use.  Provide a value, then a weight, ad infinitum
@@ -342,7 +383,7 @@ function weightedMean(){
 ///@param toNearestWhat
 /// roundToNearest(0.83,0.05) == 0.85;
 function roundToNearest(){
-	return round(argument0 / argument1) * argument1;
+	return round(_arg0 / _arg1) * _arg1;
 }
 
 
@@ -387,13 +428,13 @@ function instance_direction(_id){
 ///@description Has a 1 in N chance to return true.  N of 0 is always false, N of 1 is always true.
 ///@param chance
 function chance(){
-	return (1==ceil(random(argument0)))
+	return (1==ceil(random(_arg0)))
 }
 
 ///@description Rolls a d(n).  Returns a value between 1 and n.
 ///@param chance
 function roll(){
-	return (ceil(random(argument0)))
+	return (ceil(random(_arg0)))
 }
 
 #endregion
@@ -402,7 +443,7 @@ function roll(){
 ///@param timeStampString
 function parseTimestamp(){
 	//lastLogin="9/3/2020"
-	var array = argument0;
+	var array = _arg0;
 	var today = date_current_datetime();
 	var year = array[2];
 	//Android uses a 6 digit datestamp that GMS2 DOES NOT LIKE
@@ -430,24 +471,24 @@ function instanceOnCamera(_cam,_id,_buffer=0){
 ///@param value
 ///@param min
 ///@param max
-function isBetween(argument0, argument1, argument2) {
-	return (argument0>=argument1 && argument0<=argument2);
+function isBetween(_arg0, _arg1, _arg2) {
+	return (_arg0>=_arg1 && _arg0<=_arg2);
 }
 
 ///@desc sets image_xscale and image_yscale
 ///@param image_scale
-function image_scale(argument0) {
-	image_xscale = argument0;
+function image_scale(_arg0) {
+	image_xscale = _arg0;
 	image_yscale = image_xscale;
 }
 
-function instance_random(argument0) {
-	var number = instance_number(argument0);
-	for (var i = 0; i < number; ++i;)
+function instance_random(_arg0) {
+	var __number = instance_number(_arg0);
+	for (var i = 0; i < __number; ++i;)
 	    {
-	    instances[i] = instance_find(argument0,i);
+	    instances[i] = instance_find(_arg0,i);
 	    }
-	if (number==0){instances[0]=-1;}
+	if (__number==0){instances[0]=-1;}
 	return (
 	instances[floor(random(array_length_1d(instances)))]
 	);
@@ -619,11 +660,11 @@ function setSetting(_section,_key,_value)  {
 ///@param section
 ///@param key
 ///@param defaultValue
-function getSetting(argument0, argument1, argument2) {
+function getSetting(_arg0, _arg1, _arg2) {
 
 	ini_open("settings.ini");
 
-	var thing = ini_read_real(argument0,argument1,argument2);
+	var thing = ini_read_real(_arg0,_arg1,_arg2);
 
 	ini_close();
 
@@ -647,25 +688,29 @@ function getSetting(argument0, argument1, argument2) {
 	
 	function ini_get_real(_file,_section,_key,_default){
 		ini_open(_file);
-		ini_read_real(_section,_key,_default);
+		var __i = ini_read_real(_section,_key,_default);
 		ini_close();
+		return __i;
 	}
 	
 	function ini_get_string(_file,_section,_key,_default){
 		ini_open(_file);
-		ini_read_string(_section,_key,_default);
+		var __i = ini_read_string(_section,_key,_default);
 		ini_close();
+		return __i;
 	}
 	
 	function progress_set(_section,_key,_value){
 		ini_set("progress.ini",_section,_key,_value);
 	}
 	function progress_get_real(_section,_key,_value){
-		ini_get_real("progress.ini",_section,_key,_value);
+		return ini_get_real("progress.ini",_section,_key,_value);
+	}
+	function progress_get_string(_section,_key,_value){
+		return ini_get_string("progress.ini",_section,_key,_value);
 	}
 
 #endregion
-
 #region ARRAYS
 
 function array_create_2d(_w,_h,_value=0){
@@ -688,10 +733,10 @@ function array_contains(_array, _value) {
 
 ///@param ArrayToSearch
 ///@param KeyToFind
-function array_find(argument0, argument1) {
-	for (var i=0;i<array_length(argument0);i++){
-		var value = array_get(argument0,i)
-		if (value==argument1){return i;}
+function array_find(_arg0, _arg1) {
+	for (var i=0;i<array_length(_arg0);i++){
+		var value = array_get(_arg0,i)
+		if (value==_arg1){return i;}
 	}
 	return -1;
 }
@@ -714,18 +759,18 @@ function deeparray_contains(_array, _key){
 }
 
 ///@param ArrayToSearch
-function arrayFindFreePlace(argument0) {
-	return array_contains(argument0,-1);
+function arrayFindFreePlace(_arg0) {
+	return array_contains(_arg0,-1);
 }
 
 #endregion
 
 ///@desc Determines if an object has any children objects in the Asset Browser
 ///@param object_index
-function object_has_children(argument0){
+function object_has_children(_arg0){
 	var OBJECTS_BEGIN = 1;
 	var OBJECTS_END = 100000;
-	var _ancestor = argument0;
+	var _ancestor = _arg0;
 
 	for (var i=OBJECTS_BEGIN;i<OBJECTS_END;i++){
 		var __obj = i;
@@ -793,6 +838,11 @@ function object_get_instances(_object_index){
 
 function instance_create_singleton(_object_index){
 	if (!instance_exists(_object_index)){
-		instance_create_depth(0,0,0,_object_index);	
+		return instance_create_depth(0,0,0,_object_index);	
 	}
+	return instance_nearest(x,y,_object_index);
+}
+
+function instance_create(_x,_y,_object_index){
+	return (instance_create_depth(_x,_y,0,_object_index));
 }
